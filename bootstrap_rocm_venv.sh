@@ -4,7 +4,7 @@
 set -euo pipefail
 
 # Bootstrap a project-local venv that can import ROCm torch from /opt/venv.
-# Installs project deps into .venv while keeping /opt/venv untouched.
+# Installs repo dependencies into .venv while keeping /opt/venv untouched.
 
 ROCM_BASE_PY="${ROCM_BASE_PY:-/opt/venv/bin/python3}"
 VENV_DIR="${VENV_DIR:-.venv}"
@@ -104,7 +104,23 @@ else
   fi
 fi
 
+echo "[bootstrap] Verifying project imports..."
+python - <<'PY'
+import llm_gallery.cli
+import llama_cpp
+
+print("llm_gallery_cli:", llm_gallery.cli.__file__)
+print("llama_cpp:", getattr(llama_cpp, "__version__", "unknown"))
+print("llama_cpp_file:", getattr(llama_cpp, "__file__", "unknown"))
+print("gpu_offload_supported:", bool(llama_cpp.llama_supports_gpu_offload()))
+
+if not llama_cpp.llama_supports_gpu_offload():
+    raise SystemExit("llama_cpp does not report GPU offload support")
+PY
+
 echo
 echo "[bootstrap] Done."
 echo "  Activate with: source ${VENV_DIR}/bin/activate"
 echo "  Verify torch:  python -c \"import torch; print(torch.__version__, torch.cuda.is_available())\""
+echo "  Verify CLI:    python -m llm_gallery.cli --help"
+echo "  Live verify:   MODEL_PATH=/abs/path/to/model.gguf scripts/verify-live"

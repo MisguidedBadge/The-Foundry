@@ -4,9 +4,9 @@
 
 This repository builds a local CLI for loading, testing, and unloading GGUF
 LLM models with `llama.cpp` on AMD ROCm/HIP GPUs only. The first milestone is a
-working end-to-end path for the existing Qwen GGUF model in `models/`, with
-per-run context size, prompt smoke tests, token/sec reporting, GPU telemetry,
-and VRAM release on unload.
+working end-to-end path for the existing Qwen GGUF model on disk, with per-run
+context size, prompt smoke tests, token/sec reporting, GPU telemetry, and VRAM
+release on unload.
 
 ## Read-First Order
 

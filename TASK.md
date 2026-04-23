@@ -44,8 +44,8 @@ repository expands to additional models.
 Run:
 
 ```bash
-.venv/bin/python -m llm_gallery.cli plan --model models/Qwen3.6-35B-A3B/BF16/Qwen3.6-35B-A3B-BF16-00001-of-00002.gguf
-scripts/verify-live
+.venv/bin/python -m llm_gallery.cli plan --model /abs/path/to/Qwen3.6-35B-A3B-BF16-00001-of-00002.gguf
+MODEL_PATH=/abs/path/to/Qwen3.6-35B-A3B-BF16-00001-of-00002.gguf scripts/verify-live
 ```
 
 ## Explicit Non-Goals

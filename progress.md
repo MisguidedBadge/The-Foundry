@@ -77,3 +77,21 @@ future supervisors.
   stress-tested context size.
 - Notes: `262144` is the trained token context for this checkpoint. It is the
   current tested ceiling, not the recommended everyday default.
+
+## 2026-04-23 Submodule Paths And Push Gate
+
+- Changed: added `--model-root` plus `LLM_GALLERY_MODEL_ROOT` support so the
+  default Qwen path can resolve from a shared model tree outside the repo while
+  preserving explicit `--model` overrides. Added `requirements.txt`, refreshed
+  bootstrap/setup docs for fresh `.venv` creation, added
+  `CODEX_SUBMODULE.md`, and added a repo-local `pre-push` hook installer that
+  runs `scripts/verify-live`.
+- Verified: `bash -n bootstrap_rocm_venv.sh` passed. The CLI `plan` command
+  passed with `--model-root models`, with an explicit `--model ...gguf`, and
+  with `LLM_GALLERY_MODEL_ROOT=models`. `scripts/install-git-hooks` configured
+  `core.hooksPath` to `.githooks`. `scripts/verify-live` passed live with
+  `llama_cpp 0.3.19`, `AMD Radeon Graphics`, sane prompt outputs, and
+  `unload_delta_bytes=409600`.
+- Notes: the editable install created transient `llm_gallery.egg-info/`
+  metadata during verification; future supervisors should remove that artifact
+  before finishing if it appears in the worktree.

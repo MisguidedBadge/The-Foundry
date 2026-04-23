@@ -43,7 +43,14 @@ def build_parser() -> argparse.ArgumentParser:
         "import-model",
     ):
         command_parser = subparsers.add_parser(command_name)
-        command_parser.add_argument("--model")
+        command_parser.add_argument(
+            "--model",
+            help="Direct path to a .gguf file or model directory. Overrides --model-root.",
+        )
+        command_parser.add_argument(
+            "--model-root",
+            help="Base directory for the default bundled model when --model is not set.",
+        )
         command_parser.add_argument("--ctx-size")
         command_parser.add_argument("--gpu-layers")
         command_parser.add_argument(
@@ -124,6 +131,7 @@ def build_plan_payload(config: RuntimeConfig) -> dict[str, object]:
 def run_plan(args: argparse.Namespace) -> int:
     config = RuntimeConfig.from_sources(
         model=args.model,
+        model_root=args.model_root,
         ctx_size=args.ctx_size,
         gpu_layers=args.gpu_layers,
         allow_cpu_fallback=args.allow_cpu_fallback,
@@ -135,6 +143,7 @@ def run_plan(args: argparse.Namespace) -> int:
 def run_verify_runtime(args: argparse.Namespace) -> int:
     config = RuntimeConfig.from_sources(
         model=args.model,
+        model_root=args.model_root,
         ctx_size=args.ctx_size,
         gpu_layers=args.gpu_layers,
         allow_cpu_fallback=args.allow_cpu_fallback,
@@ -160,6 +169,7 @@ def run_verify_runtime(args: argparse.Namespace) -> int:
 def run_smoke(args: argparse.Namespace) -> int:
     config = RuntimeConfig.from_sources(
         model=args.model,
+        model_root=args.model_root,
         ctx_size=args.ctx_size,
         gpu_layers=args.gpu_layers,
         allow_cpu_fallback=args.allow_cpu_fallback,
@@ -192,6 +202,7 @@ def _resolve_stress_ctx_sizes(args: argparse.Namespace) -> tuple[int, ...]:
 def run_estimate_context(args: argparse.Namespace) -> int:
     config = RuntimeConfig.from_sources(
         model=args.model,
+        model_root=args.model_root,
         ctx_size=args.ctx_size,
         gpu_layers=args.gpu_layers,
         allow_cpu_fallback=args.allow_cpu_fallback,
@@ -212,6 +223,7 @@ def run_estimate_context(args: argparse.Namespace) -> int:
 def run_import_model(args: argparse.Namespace) -> int:
     config = RuntimeConfig.from_sources(
         model=args.model,
+        model_root=args.model_root,
         ctx_size=args.ctx_size,
         gpu_layers=args.gpu_layers,
         allow_cpu_fallback=args.allow_cpu_fallback,
@@ -251,6 +263,7 @@ def _print_interactive_help() -> None:
 def run_interactive(args: argparse.Namespace) -> int:
     config = RuntimeConfig.from_sources(
         model=args.model,
+        model_root=args.model_root,
         ctx_size=args.ctx_size,
         gpu_layers=args.gpu_layers,
         allow_cpu_fallback=args.allow_cpu_fallback,

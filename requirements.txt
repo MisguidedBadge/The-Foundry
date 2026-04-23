@@ -1,0 +1,3 @@
+# Install the repo itself into the bridged ROCm venv.
+# ROCm Python packages remain sourced from /opt/venv via bootstrap_rocm_venv.sh.
+-e .

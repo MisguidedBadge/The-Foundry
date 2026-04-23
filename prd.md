@@ -17,7 +17,7 @@ Version 1 is intentionally narrow:
 - GGUF model format only
 - ROCm/HIP GPU execution only
 - no CPU inference fallback
-- first supported model path is the existing Qwen GGUF model under `models/`
+- first supported model path is the existing local Qwen GGUF model on disk
 
 ## Primary User
 

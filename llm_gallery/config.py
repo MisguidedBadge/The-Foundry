@@ -6,8 +6,10 @@ from pathlib import Path
 from typing import Mapping
 
 
-DEFAULT_MODEL_PATH = Path(
-    "models/Qwen3.6-35B-A3B/BF16/"
+REPO_ROOT = Path(__file__).resolve().parent.parent
+DEFAULT_MODEL_ROOT = REPO_ROOT / "models"
+DEFAULT_MODEL_RELATIVE_PATH = Path(
+    "Qwen3.6-35B-A3B/BF16/"
     "Qwen3.6-35B-A3B-BF16-00001-of-00002.gguf"
 )
 DEFAULT_CTX_SIZE = 4096
@@ -96,10 +98,23 @@ def _pick_model_from_directory(directory: Path) -> Path:
     return split_shards[0] if split_shards else ggufs[0]
 
 
-def resolve_model_path(model: str | None = None, cwd: Path | None = None) -> Path:
+def resolve_model_root(model_root: str | None = None, cwd: Path | None = None) -> Path:
     base_dir = cwd or Path.cwd()
-    candidate = model or str(DEFAULT_MODEL_PATH)
-    path = _resolve_candidate_path(candidate, base_dir)
+    if model_root is None:
+        return DEFAULT_MODEL_ROOT.resolve()
+    return _resolve_candidate_path(model_root, base_dir)
+
+
+def resolve_model_path(
+    model: str | None = None,
+    model_root: str | None = None,
+    cwd: Path | None = None,
+) -> Path:
+    base_dir = cwd or Path.cwd()
+    if model is not None:
+        path = _resolve_candidate_path(model, base_dir)
+    else:
+        path = resolve_model_root(model_root, base_dir) / DEFAULT_MODEL_RELATIVE_PATH
     if path.is_dir():
         path = _pick_model_from_directory(path)
     if path.suffix.lower() != ".gguf":
@@ -124,6 +139,7 @@ class RuntimeConfig:
         cls,
         *,
         model: str | None = None,
+        model_root: str | None = None,
         ctx_size: int | str | None = None,
         gpu_layers: int | str | None = None,
         allow_cpu_fallback: bool | str | None = None,
@@ -133,7 +149,11 @@ class RuntimeConfig:
         environ = env if env is not None else os.environ
         base_dir = cwd or Path.cwd()
 
-        resolved_model = resolve_model_path(model or environ.get("LLM_GALLERY_MODEL"), base_dir)
+        resolved_model = resolve_model_path(
+            model or environ.get("LLM_GALLERY_MODEL"),
+            model_root if model_root is not None else environ.get("LLM_GALLERY_MODEL_ROOT"),
+            base_dir,
+        )
         resolved_ctx_size = validate_ctx_size(
             ctx_size if ctx_size is not None else environ.get("LLM_GALLERY_CTX_SIZE", DEFAULT_CTX_SIZE)
         )

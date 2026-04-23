@@ -2,17 +2,25 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-MODEL_PATH="${MODEL_PATH:-models/Qwen3.6-35B-A3B/BF16/Qwen3.6-35B-A3B-BF16-00001-of-00002.gguf}"
+MODEL_PATH="${MODEL_PATH:-${LLM_GALLERY_MODEL:-}}"
+MODEL_ROOT="${MODEL_ROOT:-${LLM_GALLERY_MODEL_ROOT:-}}"
 CTX_SIZE="${CTX_SIZE:-4096}"
 MAX_TOKENS="${MAX_TOKENS:-48}"
 
 cd "${ROOT_DIR}"
 
+MODEL_ARGS=()
+if [[ -n "${MODEL_PATH}" ]]; then
+  MODEL_ARGS+=(--model "${MODEL_PATH}")
+elif [[ -n "${MODEL_ROOT}" ]]; then
+  MODEL_ARGS+=(--model-root "${MODEL_ROOT}")
+fi
+
 .venv/bin/python -m llm_gallery.cli verify-runtime \
-  --model "${MODEL_PATH}" \
+  "${MODEL_ARGS[@]}" \
   --ctx-size "${CTX_SIZE}"
 
 .venv/bin/python -m llm_gallery.cli smoke-run \
-  --model "${MODEL_PATH}" \
+  "${MODEL_ARGS[@]}" \
   --ctx-size "${CTX_SIZE}" \
   --max-tokens "${MAX_TOKENS}"
