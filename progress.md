@@ -53,3 +53,27 @@ future supervisors.
   GPU-only local terminal interface around `llama_cpp_python` with live ROCm
   verification, per-run context size, interactive prompting, and unload/VRAM
   checks.
+
+## 2026-04-23 Import Workflow And Qwen Profile
+
+- Changed: added `estimate-context` and `import-model` commands plus a
+  `profile/` workflow so importing a new model now includes live
+  characterization and context stress testing.
+- Verified: `estimate-context` reported the Qwen GGUF characteristics live and
+  estimated `81920` KV-cache bytes per token. `import-model` generated
+  `profile/qwen3-6-35b-a3b/` and live stress-tested context sizes `4096`,
+  `8192`, `16384`, `32768`, and `65536`, all with successful unload checks.
+- Notes: the current Qwen profile recommends `16384` as the interactive
+  default, `32768` as a longer-session setting, and records `65536` as the
+  highest live-tested context size so far.
+
+## 2026-04-23 Full Qwen Context Ceiling
+
+- Changed: raised the CLI context validation cap to `262144` and expanded the
+  default profiling stress set through `131072` and `262144`.
+- Verified: reran the `import-model` workflow live and confirmed the Qwen model
+  loads, generates, and unloads cleanly at `131072` and `262144` context
+  sizes. The refreshed profile now records `262144` as the highest successfully
+  stress-tested context size.
+- Notes: `262144` is the trained token context for this checkpoint. It is the
+  current tested ceiling, not the recommended everyday default.

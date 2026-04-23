@@ -14,7 +14,7 @@ DEFAULT_CTX_SIZE = 4096
 DEFAULT_GPU_LAYERS = -1
 DEFAULT_MAX_TOKENS = 256
 MIN_CTX_SIZE = 256
-MAX_CTX_SIZE = 131072
+MAX_CTX_SIZE = 262144
 DEFAULT_ROCM_TOOLS = ("rocm-smi", "rocminfo")
 DEFAULT_SYSTEM_PROMPT = (
     "You are a helpful assistant running in a local terminal session. "

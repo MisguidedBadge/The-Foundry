@@ -4,6 +4,7 @@ import argparse
 from dataclasses import asdict
 import importlib.util
 import json
+from pathlib import Path
 import shutil
 import sys
 
@@ -13,6 +14,12 @@ from .config import (
     DEFAULT_PROMPTS,
     RuntimeConfig,
     validate_max_tokens,
+)
+from .profiling import (
+    DEFAULT_STRESS_CTX_SIZES,
+    estimate_context,
+    import_model_profile,
+    inspect_model_characteristics,
 )
 from .runtime import (
     LiveModelSession,
@@ -27,7 +34,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="llm-gallery")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    for command_name in ("plan", "verify-runtime", "smoke-run", "interactive"):
+    for command_name in (
+        "plan",
+        "verify-runtime",
+        "smoke-run",
+        "interactive",
+        "estimate-context",
+        "import-model",
+    ):
         command_parser = subparsers.add_parser(command_name)
         command_parser.add_argument("--model")
         command_parser.add_argument("--ctx-size")
@@ -47,6 +61,30 @@ def build_parser() -> argparse.ArgumentParser:
             command_parser.add_argument(
                 "--max-tokens",
                 default=str(DEFAULT_MAX_TOKENS),
+            )
+        if command_name in {"estimate-context", "import-model"}:
+            command_parser.add_argument(
+                "--stress-ctx-size",
+                action="append",
+                dest="stress_ctx_sizes",
+                type=int,
+                help="Repeat to override the default live context stress set.",
+            )
+        if command_name == "import-model":
+            command_parser.add_argument(
+                "--profile-root",
+                default="profile",
+            )
+            command_parser.add_argument(
+                "--slug",
+            )
+            command_parser.add_argument(
+                "--stress-prompt",
+                default="In one sentence, confirm that context stress testing is running.",
+            )
+            command_parser.add_argument(
+                "--stress-max-tokens",
+                default="24",
             )
 
     return parser
@@ -142,6 +180,60 @@ def run_smoke(args: argparse.Namespace) -> int:
         "unload_delta_bytes": result.unload_delta_bytes,
         "unload_within_tolerance": result.unload_within_tolerance,
         "prompts": [asdict(prompt_result) for prompt_result in result.prompts],
+    }
+    print(json.dumps(payload, indent=2, sort_keys=True))
+    return 0
+
+
+def _resolve_stress_ctx_sizes(args: argparse.Namespace) -> tuple[int, ...]:
+    return tuple(args.stress_ctx_sizes or DEFAULT_STRESS_CTX_SIZES)
+
+
+def run_estimate_context(args: argparse.Namespace) -> int:
+    config = RuntimeConfig.from_sources(
+        model=args.model,
+        ctx_size=args.ctx_size,
+        gpu_layers=args.gpu_layers,
+        allow_cpu_fallback=args.allow_cpu_fallback,
+    )
+    stress_ctx_sizes = _resolve_stress_ctx_sizes(args)
+    characteristics = inspect_model_characteristics(config)
+    estimate = estimate_context(characteristics, ctx_sizes=stress_ctx_sizes)
+    payload = {
+        "command": "estimate-context",
+        "model": str(config.model_path),
+        "characteristics": asdict(characteristics),
+        "estimate": asdict(estimate),
+    }
+    print(json.dumps(payload, indent=2, sort_keys=True))
+    return 0
+
+
+def run_import_model(args: argparse.Namespace) -> int:
+    config = RuntimeConfig.from_sources(
+        model=args.model,
+        ctx_size=args.ctx_size,
+        gpu_layers=args.gpu_layers,
+        allow_cpu_fallback=args.allow_cpu_fallback,
+    )
+    stress_ctx_sizes = _resolve_stress_ctx_sizes(args)
+    stress_max_tokens = validate_max_tokens(args.stress_max_tokens)
+    profile = import_model_profile(
+        config,
+        profile_root=Path(args.profile_root),
+        slug=args.slug,
+        stress_ctx_sizes=stress_ctx_sizes,
+        stress_prompt=args.stress_prompt,
+        stress_max_tokens=stress_max_tokens,
+    )
+    payload = {
+        "command": "import-model",
+        "status": "ok",
+        "model": str(config.model_path),
+        "profile_dir": profile.profile_dir,
+        "characteristics": asdict(profile.characteristics),
+        "estimate": asdict(profile.estimate),
+        "stress_results": [asdict(result) for result in profile.stress_results],
     }
     print(json.dumps(payload, indent=2, sort_keys=True))
     return 0
@@ -279,6 +371,10 @@ def main(argv: list[str] | None = None) -> int:
             return run_smoke(args)
         if args.command == "interactive":
             return run_interactive(args)
+        if args.command == "estimate-context":
+            return run_estimate_context(args)
+        if args.command == "import-model":
+            return run_import_model(args)
     except (ConfigError, RuntimeVerificationError) as exc:
         print(str(exc), file=sys.stderr)
         return 2

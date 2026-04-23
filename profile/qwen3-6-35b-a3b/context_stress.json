@@ -1,0 +1,93 @@
+[
+  {
+    "completion_tokens": 7,
+    "ctx_size": 4096,
+    "error": null,
+    "load_vram_delta_bytes": 3305472,
+    "ok": true,
+    "output_preview": "Context stress testing is currently running.",
+    "peak_gpu_use_percent": 28,
+    "peak_vram_used_bytes": 158642176,
+    "tokens_per_second": 3.208587440576983,
+    "unload_delta_bytes": 118784,
+    "unload_within_tolerance": true
+  },
+  {
+    "completion_tokens": 7,
+    "ctx_size": 8192,
+    "error": null,
+    "load_vram_delta_bytes": 2355200,
+    "ok": true,
+    "output_preview": "Context stress testing is currently running.",
+    "peak_gpu_use_percent": 27,
+    "peak_vram_used_bytes": 157667328,
+    "tokens_per_second": 4.330339007018341,
+    "unload_delta_bytes": 16384,
+    "unload_within_tolerance": true
+  },
+  {
+    "completion_tokens": 7,
+    "ctx_size": 16384,
+    "error": null,
+    "load_vram_delta_bytes": 3031040,
+    "ok": true,
+    "output_preview": "Context stress testing is currently running.",
+    "peak_gpu_use_percent": 27,
+    "peak_vram_used_bytes": 158359552,
+    "tokens_per_second": 3.3525157204132654,
+    "unload_delta_bytes": 8192,
+    "unload_within_tolerance": true
+  },
+  {
+    "completion_tokens": 7,
+    "ctx_size": 32768,
+    "error": null,
+    "load_vram_delta_bytes": 5910528,
+    "ok": true,
+    "output_preview": "Context stress testing is currently running.",
+    "peak_gpu_use_percent": 48,
+    "peak_vram_used_bytes": 161247232,
+    "tokens_per_second": 3.766122093750139,
+    "unload_delta_bytes": 4096,
+    "unload_within_tolerance": true
+  },
+  {
+    "completion_tokens": 7,
+    "ctx_size": 65536,
+    "error": null,
+    "load_vram_delta_bytes": 8876032,
+    "ok": true,
+    "output_preview": "Context stress testing is currently running.",
+    "peak_gpu_use_percent": 49,
+    "peak_vram_used_bytes": 164216832,
+    "tokens_per_second": 4.088334926775761,
+    "unload_delta_bytes": 0,
+    "unload_within_tolerance": true
+  },
+  {
+    "completion_tokens": 7,
+    "ctx_size": 131072,
+    "error": null,
+    "load_vram_delta_bytes": 13692928,
+    "ok": true,
+    "output_preview": "Context stress testing is currently running.",
+    "peak_gpu_use_percent": 52,
+    "peak_vram_used_bytes": 169582592,
+    "tokens_per_second": 6.444159612921366,
+    "unload_delta_bytes": 4096,
+    "unload_within_tolerance": true
+  },
+  {
+    "completion_tokens": 7,
+    "ctx_size": 262144,
+    "error": null,
+    "load_vram_delta_bytes": 28340224,
+    "ok": true,
+    "output_preview": "Context stress testing is currently running.",
+    "peak_gpu_use_percent": 56,
+    "peak_vram_used_bytes": 183685120,
+    "tokens_per_second": 8.69326850409413,
+    "unload_delta_bytes": 0,
+    "unload_within_tolerance": true
+  }
+]

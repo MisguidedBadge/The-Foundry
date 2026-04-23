@@ -1,0 +1,25 @@
+{
+  "architecture": "qwen35moe",
+  "attention_head_count": 16,
+  "attention_head_count_kv": 2,
+  "attention_key_length": 256,
+  "attention_value_length": 256,
+  "basename": "Qwen3.6-35B-A3B",
+  "block_count": 40,
+  "context_length": 262144,
+  "embedding_length": 2048,
+  "expert_count": 256,
+  "expert_used_count": 8,
+  "file_type_code": 32,
+  "inferred_datatype": "BF16",
+  "license_name": "apache-2.0",
+  "model_files": [
+    "/workspace/ai_projects/llm/model_explorer/terminal/models/Qwen3.6-35B-A3B/BF16/Qwen3.6-35B-A3B-BF16-00001-of-00002.gguf",
+    "/workspace/ai_projects/llm/model_explorer/terminal/models/Qwen3.6-35B-A3B/BF16/Qwen3.6-35B-A3B-BF16-00002-of-00002.gguf"
+  ],
+  "model_name": "Qwen3.6-35B-A3B",
+  "quantized_by": "Unsloth",
+  "repo_url": "https://huggingface.co/Qwen/Qwen3.6-35B-A3B",
+  "size_label": "35B-A3B",
+  "total_model_bytes": 69376638176
+}
