@@ -1,3 +1,4 @@
 .codex
 .venv/
 models/
+__pycache__/
