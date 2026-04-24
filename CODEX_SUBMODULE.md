@@ -26,6 +26,25 @@ Use the project-local interpreter after bootstrap:
 .venv/bin/python -m llm_gallery.cli --help
 ```
 
+If bootstrap completes but `.venv/bin/python` cannot import `llama_cpp`, or
+`llama_cpp.llama_supports_gpu_offload()` is false because `/opt/venv` does not
+ship the ROCm-enabled binding on this machine, bridge to the known-good local
+runtime from the sibling model explorer checkout:
+
+```bash
+cat > .venv/lib/python3.12/site-packages/llama_cpp_bridge.pth <<'EOF'
+/workspace/ai_projects/llm/model_explorer/terminal/.venv/lib/python3.12/site-packages
+EOF
+
+.venv/bin/python -c 'import llama_cpp; print(llama_cpp.__version__); print(bool(llama_cpp.llama_supports_gpu_offload()))'
+```
+
+Expected live result on this machine:
+
+- `llama_cpp` version `0.3.19`
+- `llama_supports_gpu_offload()` prints `True`
+- the import reports `AMD Radeon Graphics` when run with real GPU access
+
 ## Point to a model outside the submodule
 
 Pass an absolute model path on the command line:
@@ -73,3 +92,9 @@ MODEL_PATH="${LLM_GALLERY_MODEL}" CTX_SIZE=8192 MAX_TOKENS=64 scripts/verify-liv
 
 `scripts/verify-live` runs `verify-runtime` and then a live `smoke-run`. A task
 is not done unless that live verifier is green.
+
+For this parent checkout, the working external model path is:
+
+```bash
+export LLM_GALLERY_MODEL=/workspace/ai_projects/llm/web_search/models/Qwen3.6-35B-A3B/BF16/Qwen3.6-35B-A3B-BF16-00001-of-00002.gguf
+```

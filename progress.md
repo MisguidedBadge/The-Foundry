@@ -95,3 +95,16 @@ future supervisors.
 - Notes: the editable install created transient `llm_gallery.egg-info/`
   metadata during verification; future supervisors should remove that artifact
   before finishing if it appears in the worktree.
+
+## 2026-04-23 Submodule Runtime Bridge
+
+- Changed: updated `CODEX_SUBMODULE.md` with the parent checkout's absolute
+  Qwen model path and a fallback for machines where `/opt/venv` does not expose
+  a ROCm-enabled `llama_cpp` binding.
+- Verified: `The-Foundry/.venv/bin/python` imported `llama_cpp 0.3.19` from the
+  sibling `model_explorer/terminal/.venv` site-packages via a `.pth` bridge and
+  reported GPU offload support on `AMD Radeon Graphics`.
+- Notes: future Codex sessions in this parent repo should read
+  `CODEX_SUBMODULE.md`, export `LLM_GALLERY_MODEL` to the external `models/`
+  path, and keep the live verifier on the bridged ROCm runtime when the base
+  `/opt/venv` environment lacks `llama_cpp`.

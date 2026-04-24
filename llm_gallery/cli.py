@@ -119,6 +119,12 @@ def build_plan_payload(config: RuntimeConfig) -> dict[str, object]:
             ],
             "gpu_layers": config.gpu_layers,
             "cpu_fallback_allowed": config.cpu_fallback_allowed,
+            "web_rag": {
+                "mode": config.web_rag_mode,
+                "tavily_api_key_configured": bool(config.tavily_api_key),
+                "timeout_seconds": config.web_rag_timeout_seconds,
+                "max_results": config.web_rag_max_results,
+            },
         },
         "command_preview": build_llama_command(
             config,
@@ -260,6 +266,25 @@ def _print_interactive_help() -> None:
     print("  /exit       Unload the model and exit")
 
 
+def _print_web_grounding(result: object) -> None:
+    status = getattr(result, "web_grounding_status", "not_needed")
+    query = getattr(result, "web_grounding_query", None)
+    detail = getattr(result, "web_grounding_detail", None)
+    citations = getattr(result, "citations", ())
+
+    if citations:
+        print("[sources]")
+        for index, citation in enumerate(citations, start=1):
+            print(f"  {index}. {citation.url}")
+        return
+
+    if status in {"missing_api_key", "search_error", "no_results"}:
+        suffix = f" query={query!r}" if query else ""
+        if detail:
+            suffix += f" detail={detail}"
+        print(f"[web] status={status}{suffix}")
+
+
 def run_interactive(args: argparse.Namespace) -> int:
     config = RuntimeConfig.from_sources(
         model=args.model,
@@ -299,6 +324,7 @@ def run_interactive(args: argparse.Namespace) -> int:
                 f" peak_gpu={result.peak_gpu_use_percent}%"
                 f" peak_vram={result.peak_vram_used_bytes}"
             )
+            _print_web_grounding(result)
 
         while True:
             try:
@@ -354,6 +380,7 @@ def run_interactive(args: argparse.Namespace) -> int:
                 f" peak_gpu={result.peak_gpu_use_percent}%"
                 f" peak_vram={result.peak_vram_used_bytes}"
             )
+            _print_web_grounding(result)
             if not result.sane:
                 print("[warning] Output failed the simple sanity heuristic.")
     finally:

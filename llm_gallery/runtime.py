@@ -14,6 +14,7 @@ from typing import Any, Callable
 
 from .config import ConfigError, DEFAULT_SYSTEM_PROMPT, RuntimeConfig
 from .sanity import output_is_sane
+from .web_rag import SearchHit, TavilySearchProvider, prepare_grounding
 
 
 class RuntimeVerificationError(RuntimeError):
@@ -46,6 +47,10 @@ class PromptResult:
     tokens_per_second: float
     peak_gpu_use_percent: int
     peak_vram_used_bytes: int
+    web_grounding_status: str
+    web_grounding_query: str | None
+    web_grounding_detail: str | None
+    citations: tuple[SearchHit, ...]
 
 
 @dataclass(frozen=True)
@@ -337,6 +342,15 @@ class LiveModelSession:
         self._inspection = verify_runtime_requirements(config, run=run)
         self.llama_cpp_version = self._inspection.llama_cpp_version
         self.before_load = self._inspection.telemetry
+        self._web_search_provider = (
+            TavilySearchProvider(
+                api_key=config.tavily_api_key,
+                timeout_seconds=config.web_rag_timeout_seconds,
+                max_results=config.web_rag_max_results,
+            )
+            if config.tavily_api_key
+            else None
+        )
         self._llama_cpp = _load_llama_cpp()
         self._llm = self._llama_cpp.Llama(
             model_path=str(config.model_path),
@@ -426,9 +440,18 @@ class LiveModelSession:
         if self._closed:
             raise RuntimeVerificationError("session is already closed")
 
+        grounding = prepare_grounding(
+            prompt,
+            history=self._messages,
+            web_rag_mode=self._config.web_rag_mode,
+            tavily_api_key=self._config.tavily_api_key,
+            provider=self._web_search_provider,
+        )
+        message_content = grounding.grounded_prompt or prompt
+
         def generate() -> Any:
             return self._llm.create_chat_completion(
-                messages=self._messages + [{"role": "user", "content": prompt}],
+                messages=self._messages + [{"role": "user", "content": message_content}],
                 max_tokens=max_tokens,
                 temperature=0.2,
                 top_p=0.9,
@@ -459,6 +482,10 @@ class LiveModelSession:
             tokens_per_second=completion_tokens / elapsed,
             peak_gpu_use_percent=peak.gpu_use_percent,
             peak_vram_used_bytes=peak.vram_used_bytes,
+            web_grounding_status=grounding.status,
+            web_grounding_query=grounding.query,
+            web_grounding_detail=grounding.detail,
+            citations=grounding.citations,
         )
         self._messages.append({"role": "user", "content": prompt})
         self._messages.append({"role": "assistant", "content": output})

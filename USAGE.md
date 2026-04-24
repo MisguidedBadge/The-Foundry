@@ -72,6 +72,39 @@ This checks:
 - the `llama_cpp` backend is available
 - GPU offload is supported
 
+## 4A. Optional Automatic Web Grounding
+
+To enable automatic Tavily-backed web retrieval for prompts that appear to need
+fresh or external information, set web-RAG mode to `auto` and export an API key
+before running `interactive` or `smoke-run`:
+
+```bash
+export LLM_GALLERY_WEB_RAG_MODE=auto
+export LLM_GALLERY_TAVILY_API_KEY=tvly-...
+```
+
+The runtime also accepts `TAVILY_API_KEY`.
+
+Optional knobs:
+
+```bash
+export LLM_GALLERY_WEB_RAG_TIMEOUT_SECONDS=8
+export LLM_GALLERY_WEB_RAG_MAX_RESULTS=3
+```
+
+Web grounding is off by default. `LLM_GALLERY_WEB_RAG_MODE=off` also disables
+web grounding explicitly.
+
+The current trigger is intentionally narrow. Prompts with freshness or browsing
+cues such as `latest`, `today`, `recent`, `news`, or `look up` will attempt web
+retrieval only when `LLM_GALLERY_WEB_RAG_MODE=auto` is set. The default live
+verifier prompts do not trigger web grounding, so `scripts/verify-live` still
+works without a Tavily key.
+
+For this checkout, a local ignored env file now exists at `.env.local`. The
+new `scripts/verify-web-rag` helper sources that file automatically before
+running a live freshness-style `smoke-run`.
+
 ## 5. Import And Characterize A New Model
 
 When you add a new local model, use the import workflow to generate a profile
@@ -118,6 +151,10 @@ Inside the session:
 - use `/max 512` to raise or lower the response token budget mid-session
 - use `/exit` to unload the model and leave the session
 - the session keeps chat history while it stays loaded
+- when web grounding is used, citations print in a `[sources]` block after the
+  answer
+- if web grounding was needed but unavailable, the session reports the web
+  status without aborting local generation
 
 ## 7. Start Interactive Mode With A Custom Context Size
 
@@ -137,7 +174,7 @@ interactive work.
 ```bash
 python -m llm_gallery.cli smoke-run \
   --model "$MODEL" \
-  --prompt "Explain ROCm in one sentence."
+  --prompt "What is the latest ROCm release?"
 ```
 
 ## 9. Run Multiple Prompts In One One-Shot Session
@@ -181,6 +218,22 @@ MODEL_PATH="$MODEL" scripts/verify-live
 The verifier also accepts `LLM_GALLERY_MODEL`, `MODEL_ROOT`, or
 `LLM_GALLERY_MODEL_ROOT`.
 
+## 12A. Run The Live Web-RAG Verifier
+
+```bash
+scripts/verify-web-rag
+```
+
+This helper:
+
+- sources `.env.local` if present
+- verifies the ROCm runtime
+- runs `smoke-run` with a freshness-style prompt
+- fails unless `web_grounding_status` is `used`
+- fails unless citations are present
+- fails unless at least one citation is relevant and comes from an AMD/ROCm
+  documentation domain
+
 ## 13. Install The Pre-Push Regression Hook
 
 ```bash
@@ -206,6 +259,10 @@ The JSON output includes:
 - `after_unload`
 - `unload_delta_bytes`
 - `unload_within_tolerance`
+- per-prompt `web_grounding_status`
+- per-prompt `web_grounding_query`
+- per-prompt `web_grounding_detail`
+- per-prompt `citations`
 
 ## 15. Notes
 
@@ -220,5 +277,8 @@ The JSON output includes:
   before treating them as normal Foundry-ready assets.
 - For the current Qwen profile, live stress testing passed all the way up to
   `262144` context tokens.
+- The local model remains the answer generator even when web grounding is
+  enabled. Tavily search results are injected as transient per-turn context and
+  citation URLs; they are not persisted into long-term chat history.
 - [CODEX_SUBMODULE.md](CODEX_SUBMODULE.md) provides the Codex-facing submodule
   bootstrap and verification flow.

@@ -1,0 +1,5 @@
+Metadata-Version: 2.4
+Name: llm-gallery
+Version: 0.1.0
+Summary: Local ROCm-only llama.cpp workflow planner and verifier
+Requires-Python: >=3.10

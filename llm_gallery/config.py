@@ -15,6 +15,9 @@ DEFAULT_MODEL_RELATIVE_PATH = Path(
 DEFAULT_CTX_SIZE = 4096
 DEFAULT_GPU_LAYERS = -1
 DEFAULT_MAX_TOKENS = 256
+DEFAULT_WEB_RAG_MODE = "off"
+DEFAULT_WEB_RAG_TIMEOUT_SECONDS = 8.0
+DEFAULT_WEB_RAG_MAX_RESULTS = 3
 MIN_CTX_SIZE = 256
 MAX_CTX_SIZE = 262144
 DEFAULT_ROCM_TOOLS = ("rocm-smi", "rocminfo")
@@ -79,6 +82,37 @@ def validate_max_tokens(raw_value: object) -> int:
     return value
 
 
+def validate_web_rag_mode(raw_value: object) -> str:
+    value = str(raw_value or DEFAULT_WEB_RAG_MODE).strip().lower()
+    if value not in {"auto", "off"}:
+        raise ConfigError(f"web-rag mode must be 'auto' or 'off', got {raw_value!r}")
+    return value
+
+
+def validate_timeout_seconds(raw_value: object) -> float:
+    try:
+        value = float(raw_value)
+    except (TypeError, ValueError) as exc:
+        raise ConfigError(
+            f"web-rag timeout must be a number, got {raw_value!r}"
+        ) from exc
+    if value <= 0:
+        raise ConfigError(f"web-rag timeout must be positive, got {value}")
+    return value
+
+
+def validate_web_rag_max_results(raw_value: object) -> int:
+    try:
+        value = int(raw_value)
+    except (TypeError, ValueError) as exc:
+        raise ConfigError(
+            f"web-rag max-results must be an integer, got {raw_value!r}"
+        ) from exc
+    if value < 1 or value > 10:
+        raise ConfigError(f"web-rag max-results must be between 1 and 10, got {value}")
+    return value
+
+
 def _resolve_candidate_path(candidate: str | Path, cwd: Path) -> Path:
     path = Path(candidate).expanduser()
     if not path.is_absolute():
@@ -132,6 +166,10 @@ class RuntimeConfig:
     ctx_size: int
     gpu_layers: int
     cpu_fallback_allowed: bool
+    web_rag_mode: str
+    tavily_api_key: str | None
+    web_rag_timeout_seconds: float
+    web_rag_max_results: int
     rocm_tools: tuple[str, ...] = DEFAULT_ROCM_TOOLS
 
     @classmethod
@@ -166,10 +204,34 @@ class RuntimeConfig:
             else environ.get("LLM_GALLERY_ALLOW_CPU_FALLBACK", False)
         )
         resolved_allow_cpu_fallback = parse_bool(raw_allow_cpu_fallback)
+        resolved_web_rag_mode = validate_web_rag_mode(
+            environ.get("LLM_GALLERY_WEB_RAG_MODE", DEFAULT_WEB_RAG_MODE)
+        )
+        resolved_tavily_api_key = (
+            environ.get("LLM_GALLERY_TAVILY_API_KEY")
+            or environ.get("TAVILY_API_KEY")
+            or None
+        )
+        resolved_web_rag_timeout = validate_timeout_seconds(
+            environ.get(
+                "LLM_GALLERY_WEB_RAG_TIMEOUT_SECONDS",
+                DEFAULT_WEB_RAG_TIMEOUT_SECONDS,
+            )
+        )
+        resolved_web_rag_max_results = validate_web_rag_max_results(
+            environ.get(
+                "LLM_GALLERY_WEB_RAG_MAX_RESULTS",
+                DEFAULT_WEB_RAG_MAX_RESULTS,
+            )
+        )
 
         return cls(
             model_path=resolved_model,
             ctx_size=resolved_ctx_size,
             gpu_layers=resolved_gpu_layers,
             cpu_fallback_allowed=resolved_allow_cpu_fallback,
+            web_rag_mode=resolved_web_rag_mode,
+            tavily_api_key=resolved_tavily_api_key,
+            web_rag_timeout_seconds=resolved_web_rag_timeout,
+            web_rag_max_results=resolved_web_rag_max_results,
         )
